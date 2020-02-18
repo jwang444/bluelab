@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=yes" />
+    <meta http-equiv="refresh" content="content=60" />
+    <style type="text/css">
+      html { height: 100% } 
+      body { height: 75%; margin: 20; padding: 20 }
+    </style>
+    
+    <script type="text/javascript">
+
+      var markers = [];
+      var map;
+      
+      //lat and long were transcribed from journal entries; note that gate 2 could be wrong
+      // var lat = [20.1406810, 20.1447333, 20.1420425, 20.1441738, 20.1445762, 20.1450364, 20.1468042, 20.1470566, 20.1479678, 20.1480154, 20.1485672];
+      // var long = [99.8548505, 99.8554, 99.8552356, 99.8558306, 99.8555396, 99.8554785, 99.8556743, 99.8559485, 99.8559054, 99.8559739, 99.856777];
+      const fs = require('fs');
+      fs.readFile('input.txt'), (err,data) => {
+        if (err) throw err;
+        console.log(data.toString());
+      }
+
+      function initMap() {
+        var mapOptions = {
+           center: new google.maps.LatLng(20.14, 99.85),
+           zoom: 15,
+           mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map(document.getElementById("map_canvas"),mapOptions);
+
+        //add all bluemarkers
+        addMarker(new google.maps.LatLng(20.1317100,99.8404650), "blue", null);
+        addMarker(new google.maps.LatLng(20.1319535, 99.8472717), "blue", null);
+        addMarker(new google.maps.LatLng(20.1386592, 99.8555282), "blue", null);
+
+        //add all markers as green to start; eventually will need to pull from database the initial positions
+        var i;
+        for(i = 0; i < lat.length; i++){
+            addMarker(new google.maps.LatLng(lat[i],long[i]), "green", ""+(i+1));
+        }
+
+      }
+
+      // Adds a marker to the map and push to the array. Note that the index entry is 1 larger than the array entry because it is used for label. Such shitty programming honestly, but I'm so friggin tired. Basically, when 'index' is 1, this should correspond to array[0]. Also note that blue markers never get added to the markers array, bc why the fuck would they.
+      function addMarker(location, color, index) {
+        var marker;
+        switch(color){
+          case "blue":
+            marker = new google.maps.Marker({
+              position: location,
+              icon: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+              map: map
+            });
+            break;
+
+          case "green":
+            marker = new google.maps.Marker({
+              position: location,
+              icon: 'http://maps.google.com/mapfiles/ms/icons/green.png',
+              label: index,
+              map: map
+            });
+            //note here that we are subtracting one from index, god that took awfully long to troubleshoot
+            markers.splice(index-1,1,marker);
+            break;
+
+          case "red":
+            marker = new google.maps.Marker({
+              position: location,
+              icon: 'http://maps.google.com/mapfiles/ms/icons/red.png',
+              label: index,
+              map: map
+            });
+            markers.splice(index-1,1,marker);
+            break;
+        }
+        
+        //console.log(markers.length);
+      }
+
+      //function name is misleading; we do delete a marker, but we also replace it with a marker of a different color
+      function deleteMarker(index){
+        //deletes marker at index from the map; still exists inside the array
+        markers[index].setMap(null);
+        //retrieves marker at the index from the array and stores in temp
+        var temp = markers[index];
+        //retrieving color/icon; pos/location; i/label
+        var color = temp.icon;
+        var pos = temp.position;
+        var i = temp.label;
+        //console.log(color, pos, i);
+        switch(color){
+          case('http://maps.google.com/mapfiles/ms/icons/green.png'):
+            addMarker(pos, 'red', i);
+            break;
+          case('http://maps.google.com/mapfiles/ms/icons/red.png'):
+            addMarker(pos, 'green', i);
+            break;
+        }
+      }
+
+      //changes all markers to be the same color
+      function allColor(color){
+        var i;
+        for(i=0; i<markers.length; i++){
+          markers[i].setMap(null);
+          //note that index fed into array is actually 1 greater than the array index; because my brain is fried we just need to deal with this mistake for the rest of our project
+          addMarker(markers[i].position, color, ""+(i+1));
+        }
+      }
+
+
+
+    </script>
+  </head>
+
+  <body>
+    <div id="map_canvas" style="width:100%; height:100%"></div>
+    
+    <b>Author:</b><br>
+    Richard Chung<p>
+
+    <b>Legend:</b><br>
+    Blue means ???; Green means open; Red means closed <p>
+
+    Toggle each of these by clicking on them: <br>
+    <input onclick="deleteMarker(0);" type=button value="1">
+    <input onclick="deleteMarker(1);" type=button value="2">
+    <input onclick="deleteMarker(2);" type=button value="3">
+    <input onclick="deleteMarker(3);" type=button value="4">
+    <input onclick="deleteMarker(4);" type=button value="5">
+    <input onclick="deleteMarker(5);" type=button value="6">
+    <input onclick="deleteMarker(6);" type=button value="7">
+    <input onclick="deleteMarker(7);" type=button value="8">
+    <input onclick="deleteMarker(8);" type=button value="9">
+    <input onclick="deleteMarker(9);" type=button value="10">
+    <input onclick="deleteMarker(10);" type=button value="11"> <br>
+
+    <br> Presets: <br>
+    <input onclick="allColor('green');" type=button value="All on">
+    <input onclick="allColor('red');" type=button value="All Off"> <br>
+
+    <!--ohhhhhhhhhhhhhhhhhhhh my god async! wow, no need to use a god forbidden HTML form and refresh the page every damn time!!!!! btw, ya boi swiped this API key from his ENG100 prof, so keep it on the downlow B-)-->
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD60d34mCUoQ63hWqsCdZwwa1_Ywhm_4wE&callback=initMap">
+    </script>
+    
+    
+
+  </body>
+
+</html>
